@@ -5,32 +5,42 @@ class AccountManager:
     def __init__(self, user_id):
         self.user_id = user_id
 
-    def add_account(self, site_name, login, password, auth_type):
+    def add_account(self, site_name, login=None, password=None, auth_type=None):
         connection = sqlite3.connect("users_data.db")
         cursor = connection.cursor()
 
-        query = """
-            INSERT INTO user_accounts (site_name, login, password, auth_type, user_id)
-            VALUES (?, ?, ?, ?, ?)
-        """
-        cursor.execute(query, (site_name, login, password, auth_type, self.user_id))
-        connection.commit()
+        cursor.execute(
+            "SELECT id FROM user_accounts WHERE user_id = ? AND site_name = ? AND auth_type = ?",
+            (self.user_id, site_name, auth_type)
+        )
+        existing = cursor.fetchone()
+
+        if existing:
+            print(f"The site '{site_name}' with authentication type '{auth_type}' is already added. Login and password are not needed.")
+        else:
+            # If data is not provided, ask for it
+            if login is None:
+                login = input(f"Enter login for {site_name}: ").strip()
+            if password is None:
+                password = input(f"Enter password for {site_name}: ").strip()
+            if auth_type is None:
+                auth_type = input(f"Enter authentication type for {site_name}: ").strip()
+
+            cursor.execute(
+                "INSERT INTO user_accounts (site_name, login, password, auth_type, user_id) VALUES (?, ?, ?, ?, ?)",
+                (site_name, login, password, auth_type, self.user_id)
+            )
+            connection.commit()
+            print(f"Account for {site_name} has been successfully added!")
         connection.close()
-        print("Account added successfully!")
 
     def get_registrations(self):
         connection = sqlite3.connect("users_data.db")
         cursor = connection.cursor()
-
-        cursor.execute("SELECT site_name, login, auth_type FROM user_accounts WHERE user_id = ?", (self.user_id,))
+        cursor.execute(
+            "SELECT site_name, login, auth_type FROM user_accounts WHERE user_id = ?",
+            (self.user_id,)
+        )
         registrations = cursor.fetchall()
         connection.close()
         return registrations
-
-    def delete_registration(self, site_name):
-        connection = sqlite3.connect("users_data.db")
-        cursor = connection.cursor()
-        cursor.execute("DELETE FROM user_accounts WHERE user_id = ? AND site_name = ?", (self.user_id, site_name))
-        connection.commit()
-        connection.close()
-        print(f"Registration for {site_name} deleted successfully.")
