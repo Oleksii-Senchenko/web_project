@@ -1,4 +1,5 @@
 import sqlite3
+from user_system import AccountManager
 
 connection = sqlite3.connect("users_data.db")
 cursor = connection.cursor()
@@ -95,4 +96,29 @@ def main():
 
 
 
-main()
+# main()
+
+
+
+user_system = User()
+user_system.register_user("testuser", "test@example.com", "12345")
+
+if user_system.login_user("test@example.com", "12345"):
+    user_id = user_system.current_user
+
+    site_system = AccountManager(user_id)
+
+    site_system.add_account("Facebook", "fb_user", "fb_pass", "Facebook")
+    site_system.add_account("Google", "google_user", "google_pass", "Google")
+
+    regs = site_system.get_registrations()
+    print("\nUser registrations:")
+    for reg in regs:
+        print(f"Site: {reg[0]}, Login: {reg[1]}, Type: {reg[2]}")
+
+    site_system.delete_registration("Facebook")
+
+    regs = site_system.get_registrations()
+    print("\nRegistrations after deletion:")
+    for reg in regs:
+        print(f"Site: {reg[0]}, Login: {reg[1]}, Type: {reg[2]}")
